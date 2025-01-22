@@ -2,12 +2,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "timing.h"
-
-#define DR_WAV_IMPLEMENTATION
-
-#include "dr_wav.h"
 #include "vad.h"
-
+#include "test_common.h"
 #ifndef nullptr
 #define nullptr 0
 #endif
@@ -19,25 +15,6 @@
 #ifndef MAX
 #define  MAX(A, B)        ((A) > (B) ? (A) : (B))
 #endif
-
-
-//读取wav文件
-int16_t *wavRead_int16(char *filename, uint32_t *sampleRate, uint64_t *totalSampleCount) {
-    unsigned int channels;
-    int16_t *buffer = drwav_open_file_and_read_pcm_frames_s16(filename, &channels, sampleRate, totalSampleCount, NULL);
-    if (buffer == nullptr) {
-        printf("读取wav文件失败.");
-    }
-    //仅仅处理单通道音频
-    if (channels != 1) {
-        drwav_free(buffer, NULL);
-        buffer = nullptr;
-        *sampleRate = 0;
-        *totalSampleCount = 0;
-    }
-    return buffer;
-}
-
 
 int vadProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_t vad_mode, int per_ms_frames) {
     if (buffer == nullptr) return -1;
@@ -85,7 +62,8 @@ int vadProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_
 void vad(char *in_file) {
     uint32_t sampleRate = 0;
     uint64_t inSampleCount = 0;
-    int16_t *inBuffer = wavRead_int16(in_file, &sampleRate, &inSampleCount);
+    unsigned int channels = 0;
+    int16_t *inBuffer = wavRead_int16(in_file, &sampleRate, &inSampleCount, &channels);
     //如果加载成功
     if (inBuffer != nullptr) {
         //    Aggressiveness mode (0, 1, 2, or 3)

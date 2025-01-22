@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.4)
-project(vad)
+project(rtc_apm)
 if (MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
@@ -18,12 +18,14 @@ else ()
 endif ()
 
 include_directories(include .)
+add_library(test_common STATIC test_common.cc dr_wav.h timing.h)
 
-file(GLOB VAD_SRC
-        ${CMAKE_CURRENT_LIST_DIR}/vad/*.c
-        ${CMAKE_CURRENT_LIST_DIR}/vad/*.cc
-        signal_processing_library.c
-        )
-set(VADCOMPILE_CODE ${VAD_SRC})
+add_library(signal_processing STATIC signal_processing_library.c)
 
-add_executable(vad main.cc ${VADCOMPILE_CODE})
+aux_source_directory(vad VAD_SRC)
+add_library(vad STATIC ${VAD_SRC})
+target_link_libraries(vad signal_processing)
+
+
+add_executable(vad_main vad_main.cc)
+target_link_libraries(vad_main vad test_common)
