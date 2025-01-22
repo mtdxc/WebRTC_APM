@@ -39,20 +39,20 @@ void WebRtcSpl_SynthesisQMF(const int16_t *low_band,
 #endif  // __cplusplus
 namespace webrtc {
 
-    struct TwoBandsStates {
-        TwoBandsStates() {
-            memset(analysis_state1, 0, sizeof(analysis_state1));
-            memset(analysis_state2, 0, sizeof(analysis_state2));
-            memset(synthesis_state1, 0, sizeof(synthesis_state1));
-            memset(synthesis_state2, 0, sizeof(synthesis_state2));
-        }
+struct TwoBandsStates {
+    TwoBandsStates() {
+        memset(analysis_state1, 0, sizeof(analysis_state1));
+        memset(analysis_state2, 0, sizeof(analysis_state2));
+        memset(synthesis_state1, 0, sizeof(synthesis_state1));
+        memset(synthesis_state2, 0, sizeof(synthesis_state2));
+    }
 
-        static const int kStateSize = 6;
-        int analysis_state1[kStateSize]{};
-        int analysis_state2[kStateSize]{};
-        int synthesis_state1[kStateSize]{};
-        int synthesis_state2[kStateSize]{};
-    };
+    static const int kStateSize = 6;
+    int analysis_state1[kStateSize]{};
+    int analysis_state2[kStateSize]{};
+    int synthesis_state1[kStateSize]{};
+    int synthesis_state2[kStateSize]{};
+};
 
 // Splitting filter which is able to split into and merge from 2 or 3 frequency
 // bands. The number of channels needs to be provided at construction time.
@@ -61,34 +61,34 @@ namespace webrtc {
 // to merge these bands again. The input and output signals are contained in
 // ChannelBuffers and for the different bands an array of ChannelBuffers is
 // used.
-    class SplittingFilter {
-    public:
-        SplittingFilter(size_t num_channels, size_t num_bands, size_t num_frames);
+class SplittingFilter {
+public:
+    SplittingFilter(size_t num_channels, size_t num_bands, size_t num_frames);
 
-        ~SplittingFilter();
+    ~SplittingFilter();
 
-        void Analysis(const ChannelBuffer<float> *data, ChannelBuffer<float> *bands);
+    void Analysis(const ChannelBuffer<float> *data, ChannelBuffer<float> *bands);
 
-        void Synthesis(const ChannelBuffer<float> *bands, ChannelBuffer<float> *data);
+    void Synthesis(const ChannelBuffer<float> *bands, ChannelBuffer<float> *data);
 
-    private:
-        // Two-band analysis and synthesis work for 640 samples or less.
-        void TwoBandsAnalysis(const ChannelBuffer<float> *data,
-                              ChannelBuffer<float> *bands);
+private:
+    // Two-band analysis and synthesis work for 640 samples or less.
+    void TwoBandsAnalysis(const ChannelBuffer<float> *data,
+                            ChannelBuffer<float> *bands);
 
-        void TwoBandsSynthesis(const ChannelBuffer<float> *bands,
-                               ChannelBuffer<float> *data);
+    void TwoBandsSynthesis(const ChannelBuffer<float> *bands,
+                            ChannelBuffer<float> *data);
 
-        void ThreeBandsAnalysis(const ChannelBuffer<float> *data,
-                                ChannelBuffer<float> *bands);
+    void ThreeBandsAnalysis(const ChannelBuffer<float> *data,
+                            ChannelBuffer<float> *bands);
 
-        void ThreeBandsSynthesis(const ChannelBuffer<float> *bands,
-                                 ChannelBuffer<float> *data);
+    void ThreeBandsSynthesis(const ChannelBuffer<float> *bands,
+                                ChannelBuffer<float> *data);
 
-        const size_t num_bands_;
-        std::vector<TwoBandsStates> two_bands_states_;
-        std::vector<ThreeBandFilterBank> three_band_filter_banks_;
-    };
+    const size_t num_bands_;
+    std::vector<TwoBandsStates> two_bands_states_;
+    std::vector<ThreeBandFilterBank> three_band_filter_banks_;
+};
 
 }  // namespace webrtc
 

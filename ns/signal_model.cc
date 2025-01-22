@@ -12,13 +12,13 @@
 
 namespace webrtc {
 
-    SignalModel::SignalModel() {
-        constexpr float kSfFeatureThr = 0.5f;
+SignalModel::SignalModel() {
+    constexpr float kSfFeatureThr = 0.5f;
 
-        lrt = kLtrFeatureThr;
-        spectral_flatness = kSfFeatureThr;
-        spectral_diff = kSfFeatureThr;
-        avg_log_lrt.fill(kLtrFeatureThr);
-    }
+    lrt = kLtrFeatureThr;
+    spectral_flatness = kSfFeatureThr;
+    spectral_diff = kSfFeatureThr;
+    avg_log_lrt.fill(kLtrFeatureThr);
+}
 
 }  // namespace webrtc

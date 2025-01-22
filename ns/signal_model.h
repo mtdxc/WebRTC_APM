@@ -17,19 +17,19 @@
 
 namespace webrtc {
 
-    struct SignalModel {
-        SignalModel();
+struct SignalModel {
+    SignalModel();
 
-        SignalModel(const SignalModel &) = delete;
+    SignalModel(const SignalModel &) = delete;
 
-        SignalModel &operator=(const SignalModel &) = delete;
+    SignalModel &operator=(const SignalModel &) = delete;
 
-        float lrt;
-        float spectral_diff;
-        float spectral_flatness;
-        // Log LRT factor with time-smoothing.
-        std::array<float, kFftSizeBy2Plus1> avg_log_lrt{};
-    };
+    float lrt;
+    float spectral_diff;
+    float spectral_flatness;
+    // Log LRT factor with time-smoothing.
+    std::array<float, kFftSizeBy2Plus1> avg_log_lrt{};
+};
 
 }  // namespace webrtc
 

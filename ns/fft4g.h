@@ -14,7 +14,7 @@
 namespace webrtc {
 
 // Refer to fft4g.c for documentation.
-    void WebRtc_rdft(size_t n, int isgn, float *a, size_t *ip, float *w);
+void WebRtc_rdft(size_t n, int isgn, float *a, size_t *ip, float *w);
 
 }  // namespace webrtc
 

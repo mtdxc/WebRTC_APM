@@ -16,26 +16,26 @@
 namespace webrtc {
 
 // Sqrt approximation.
-    float SqrtFastApproximation(float f);
+float SqrtFastApproximation(float f);
 
 // Log base conversion log(x) = log2(x)/log2(e).
-    float LogApproximation(float x);
+float LogApproximation(float x);
 
-    void LogApproximation(rtc::ArrayView<const float> x, rtc::ArrayView<float> y);
+void LogApproximation(rtc::ArrayView<const float> x, rtc::ArrayView<float> y);
 
 // 2^x approximation.
-    float Pow2Approximation(float p);
+float Pow2Approximation(float p);
 
 // x^p approximation.
-    float PowApproximation(float x, float p);
+float PowApproximation(float x, float p);
 
 // e^x approximation.
-    float ExpApproximation(float x);
+float ExpApproximation(float x);
 
-    void ExpApproximation(rtc::ArrayView<const float> x, rtc::ArrayView<float> y);
+void ExpApproximation(rtc::ArrayView<const float> x, rtc::ArrayView<float> y);
 
-    void ExpApproximationSignFlip(rtc::ArrayView<const float> x,
-                                  rtc::ArrayView<float> y);
+void ExpApproximationSignFlip(rtc::ArrayView<const float> x,
+                                rtc::ArrayView<float> y);
 }  // namespace webrtc
 
 #endif  // MODULES_AUDIO_PROCESSING_NS_FAST_MATH_H_

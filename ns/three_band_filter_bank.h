@@ -20,15 +20,15 @@
 
 namespace webrtc {
 
-    constexpr int kSparsity = 4;
-    constexpr int kStrideLog2 = 2;
-    constexpr int kStride = 1 << kStrideLog2;
-    constexpr int kNumZeroFilters = 2;
-    constexpr int kFilterSize = 4;
-    constexpr int kMemorySize = kFilterSize * kStride - 1;
-    static_assert(kMemorySize == 15,
-                  "The memory size must be sufficient to provide memory for the "
-                  "shifted filters");
+constexpr int kSparsity = 4;
+constexpr int kStrideLog2 = 2;
+constexpr int kStride = 1 << kStrideLog2;
+constexpr int kNumZeroFilters = 2;
+constexpr int kFilterSize = 4;
+constexpr int kMemorySize = kFilterSize * kStride - 1;
+static_assert(kMemorySize == 15,
+                "The memory size must be sufficient to provide memory for the "
+                "shifted filters");
 
 // An implementation of a 3-band FIR filter-bank with DCT modulation, similar to
 // the proposed in "Multirate Signal Processing for Communication Systems" by
@@ -43,35 +43,35 @@ namespace webrtc {
 // This filter bank does not satisfy perfect reconstruction. The SNR after
 // analysis and synthesis (with no processing in between) is approximately 9.5dB
 // depending on the input signal after compensating for the delay.
-    class ThreeBandFilterBank final {
-    public:
-        static const int kNumBands = 3;
-        static const int kFullBandSize = 480;
-        static const int kSplitBandSize =
-                ThreeBandFilterBank::kFullBandSize / ThreeBandFilterBank::kNumBands;
-        static const int kNumNonZeroFilters =
-                kSparsity * ThreeBandFilterBank::kNumBands - kNumZeroFilters;
+class ThreeBandFilterBank final {
+public:
+static const int kNumBands = 3;
+static const int kFullBandSize = 480;
+static const int kSplitBandSize =
+        ThreeBandFilterBank::kFullBandSize / ThreeBandFilterBank::kNumBands;
+static const int kNumNonZeroFilters =
+        kSparsity * ThreeBandFilterBank::kNumBands - kNumZeroFilters;
 
-        ThreeBandFilterBank();
+ThreeBandFilterBank();
 
-        ~ThreeBandFilterBank();
+~ThreeBandFilterBank();
 
-        // Splits |in| of size kFullBandSize into 3 downsampled frequency bands in
-        // |out|, each of size 160.
-        void Analysis(rtc::ArrayView<const float, kFullBandSize> in,
-                      rtc::ArrayView<const rtc::ArrayView<float>, kNumBands> out);
+// Splits |in| of size kFullBandSize into 3 downsampled frequency bands in
+// |out|, each of size 160.
+void Analysis(rtc::ArrayView<const float, kFullBandSize> in,
+                rtc::ArrayView<const rtc::ArrayView<float>, kNumBands> out);
 
-        // Merges the 3 downsampled frequency bands in |in|, each of size 160, into
-        // |out|, which is of size kFullBandSize.
-        void Synthesis(rtc::ArrayView<const rtc::ArrayView<float>, kNumBands> in,
-                       rtc::ArrayView<float, kFullBandSize> out);
+// Merges the 3 downsampled frequency bands in |in|, each of size 160, into
+// |out|, which is of size kFullBandSize.
+void Synthesis(rtc::ArrayView<const rtc::ArrayView<float>, kNumBands> in,
+                rtc::ArrayView<float, kFullBandSize> out);
 
-    private:
-        std::array<std::array<float, kMemorySize>, kNumNonZeroFilters>
-                state_analysis_;
-        std::array<std::array<float, kMemorySize>, kNumNonZeroFilters>
-                state_synthesis_;
-    };
+private:
+std::array<std::array<float, kMemorySize>, kNumNonZeroFilters>
+        state_analysis_;
+std::array<std::array<float, kMemorySize>, kNumNonZeroFilters>
+        state_synthesis_;
+};
 
 }  // namespace webrtc
 
