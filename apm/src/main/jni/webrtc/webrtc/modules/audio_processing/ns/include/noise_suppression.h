@@ -24,7 +24,7 @@ extern "C" {
 /*
  * This function creates an instance of the floating point Noise Suppression.
  */
-NsHandle* WebRtcNs_Create();
+RTC_EXPORT NsHandle* WebRtcNs_Create();
 
 /*
  * This function frees the dynamic memory of a specified noise suppression
@@ -33,7 +33,7 @@ NsHandle* WebRtcNs_Create();
  * Input:
  *      - NS_inst       : Pointer to NS instance that should be freed
  */
-void WebRtcNs_Free(NsHandle* NS_inst);
+RTC_EXPORT void WebRtcNs_Free(NsHandle* NS_inst);
 
 /*
  * This function initializes a NS instance and has to be called before any other
@@ -49,7 +49,7 @@ void WebRtcNs_Free(NsHandle* NS_inst);
  * Return value         :  0 - Ok
  *                        -1 - Error
  */
-int WebRtcNs_Init(NsHandle* NS_inst, uint32_t fs);
+RTC_EXPORT int WebRtcNs_Init(NsHandle* NS_inst, uint32_t fs);
 
 /*
  * This changes the aggressiveness of the noise suppression method.
@@ -64,7 +64,7 @@ int WebRtcNs_Init(NsHandle* NS_inst, uint32_t fs);
  * Return value         :  0 - Ok
  *                        -1 - Error
  */
-int WebRtcNs_set_policy(NsHandle* NS_inst, int mode);
+RTC_EXPORT int WebRtcNs_set_policy(NsHandle* NS_inst, int mode);
 
 /*
  * This functions estimates the background noise for the inserted speech frame.
@@ -77,7 +77,7 @@ int WebRtcNs_set_policy(NsHandle* NS_inst, int mode);
  * Output:
  *      - NS_inst       : Updated NS instance
  */
-void WebRtcNs_Analyze(NsHandle* NS_inst, const float* spframe);
+RTC_EXPORT void WebRtcNs_Analyze(NsHandle* NS_inst, const float* spframe);
 
 /*
  * This functions does Noise Suppression for the inserted speech frame. The
@@ -92,7 +92,7 @@ void WebRtcNs_Analyze(NsHandle* NS_inst, const float* spframe);
  *      - NS_inst       : Updated NS instance
  *      - outframe      : Pointer to output frame for each band
  */
-void WebRtcNs_Process(NsHandle* NS_inst,
+RTC_EXPORT void WebRtcNs_Process(NsHandle* NS_inst,
                      const float* const* spframe,
                      size_t num_bands,
                      float* const* outframe);
@@ -107,7 +107,7 @@ void WebRtcNs_Process(NsHandle* NS_inst,
  * Return value         : Prior speech probability in interval [0.0, 1.0].
  *                        -1 - NULL pointer or uninitialized instance.
  */
-float WebRtcNs_prior_speech_probability(NsHandle* handle);
+RTC_EXPORT float WebRtcNs_prior_speech_probability(NsHandle* handle);
 
 #ifdef __cplusplus
 }

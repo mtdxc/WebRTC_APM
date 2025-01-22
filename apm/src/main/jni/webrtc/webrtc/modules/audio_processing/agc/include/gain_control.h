@@ -64,7 +64,7 @@ extern "C"
  *                          :  0 - Normal operation.
  *                          : -1 - Error
  */
-int WebRtcAgc_AddFarend(void* agcInst,
+RTC_EXPORT int WebRtcAgc_AddFarend(void* agcInst,
                         const int16_t* inFar,
                         int16_t samples);
 
@@ -91,7 +91,7 @@ int WebRtcAgc_AddFarend(void* agcInst,
  *                          :  0 - Normal operation.
  *                          : -1 - Error
  */
-int WebRtcAgc_AddMic(void* agcInst,
+RTC_EXPORT int WebRtcAgc_AddMic(void* agcInst,
                      int16_t* inMic,
                      int16_t* inMic_H,
                      int16_t samples);
@@ -122,7 +122,7 @@ int WebRtcAgc_AddMic(void* agcInst,
  *                          :  0 - Normal operation.
  *                          : -1 - Error
  */
-int WebRtcAgc_VirtualMic(void* agcInst,
+RTC_EXPORT int WebRtcAgc_VirtualMic(void* agcInst,
                          int16_t* inMic,
                          int16_t* inMic_H,
                          int16_t samples,
@@ -167,7 +167,7 @@ int WebRtcAgc_VirtualMic(void* agcInst,
  *                          :  0 - Normal operation.
  *                          : -1 - Error
  */
-int WebRtcAgc_Process(void* agcInst,
+RTC_EXPORT int WebRtcAgc_Process(void* agcInst,
                       const int16_t* inNear,
                       const int16_t* inNear_H,
                       int16_t samples,
@@ -192,7 +192,7 @@ int WebRtcAgc_Process(void* agcInst,
  *                          :  0 - Normal operation.
  *                          : -1 - Error
  */
-int WebRtcAgc_set_config(void* agcInst, WebRtcAgc_config_t config);
+RTC_EXPORT int WebRtcAgc_set_config(void* agcInst, WebRtcAgc_config_t config);
 
 /*
  * This function returns the config parameters (targetLevelDbfs,
@@ -208,7 +208,7 @@ int WebRtcAgc_set_config(void* agcInst, WebRtcAgc_config_t config);
  *                          :  0 - Normal operation.
  *                          : -1 - Error
  */
-int WebRtcAgc_get_config(void* agcInst, WebRtcAgc_config_t* config);
+RTC_EXPORT int WebRtcAgc_get_config(void* agcInst, WebRtcAgc_config_t* config);
 
 /*
  * This function creates an AGC instance, which will contain the state
@@ -217,7 +217,7 @@ int WebRtcAgc_get_config(void* agcInst, WebRtcAgc_config_t* config);
  * Return value             : AGC instance if successful
  *                          : 0 (i.e., a NULL pointer) if unsuccessful
  */
-int WebRtcAgc_Create(void **agcInst);
+RTC_EXPORT int WebRtcAgc_Create(void **agcInst);
 
 /*
  * This function frees the AGC instance created at the beginning.
@@ -228,7 +228,7 @@ int WebRtcAgc_Create(void **agcInst);
  * Return value             :  0 - Ok
  *                            -1 - Error
  */
-int WebRtcAgc_Free(void *agcInst);
+RTC_EXPORT int WebRtcAgc_Free(void *agcInst);
 
 /*
  * This function initializes an AGC instance.
@@ -246,7 +246,7 @@ int WebRtcAgc_Free(void *agcInst);
  * Return value             :  0 - Ok
  *                            -1 - Error
  */
-int WebRtcAgc_Init(void *agcInst,
+RTC_EXPORT int WebRtcAgc_Init(void *agcInst,
                    int32_t minLevel,
                    int32_t maxLevel,
                    int16_t agcMode,

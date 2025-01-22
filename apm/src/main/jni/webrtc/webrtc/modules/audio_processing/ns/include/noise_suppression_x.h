@@ -22,7 +22,7 @@ extern "C" {
 /*
  * This function creates an instance of the fixed point Noise Suppression.
  */
-NsxHandle* WebRtcNsx_Create();
+RTC_EXPORT NsxHandle* WebRtcNsx_Create();
 
 /*
  * This function frees the dynamic memory of a specified Noise Suppression
@@ -31,7 +31,7 @@ NsxHandle* WebRtcNsx_Create();
  * Input:
  *      - nsxInst       : Pointer to NS instance that should be freed
  */
-void WebRtcNsx_Free(NsxHandle* nsxInst);
+RTC_EXPORT void WebRtcNsx_Free(NsxHandle* nsxInst);
 
 /*
  * This function initializes a NS instance
@@ -46,7 +46,7 @@ void WebRtcNsx_Free(NsxHandle* nsxInst);
  * Return value         :  0 - Ok
  *                        -1 - Error
  */
-int WebRtcNsx_Init(NsxHandle* nsxInst, uint32_t fs);
+RTC_EXPORT int WebRtcNsx_Init(NsxHandle* nsxInst, uint32_t fs);
 
 /*
  * This changes the aggressiveness of the noise suppression method.
@@ -61,7 +61,7 @@ int WebRtcNsx_Init(NsxHandle* nsxInst, uint32_t fs);
  * Return value         :  0 - Ok
  *                        -1 - Error
  */
-int WebRtcNsx_set_policy(NsxHandle* nsxInst, int mode);
+RTC_EXPORT int WebRtcNsx_set_policy(NsxHandle* nsxInst, int mode);
 
 /*
  * This functions does noise suppression for the inserted speech frame. The
@@ -76,7 +76,7 @@ int WebRtcNsx_set_policy(NsxHandle* nsxInst, int mode);
  *      - nsxInst       : Updated NSx instance
  *      - outFrame      : Pointer to output frame for each band
  */
-void WebRtcNsx_Process(NsxHandle* nsxInst,
+RTC_EXPORT void WebRtcNsx_Process(NsxHandle* nsxInst,
                        const short* const* speechFrame,
                        int num_bands,
                        short* const* outFrame);

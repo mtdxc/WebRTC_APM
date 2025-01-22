@@ -44,7 +44,7 @@ extern "C" {
  * initialized separately using the WebRtcAecm_Init() function.
  * Returns a pointer to the instance and a nullptr at failure.
  */
-void* WebRtcAecm_Create();
+RTC_EXPORT void* WebRtcAecm_Create();
 
 /*
  * This function releases the memory allocated by WebRtcAecm_Create()
@@ -53,7 +53,7 @@ void* WebRtcAecm_Create();
  * -------------------------------------------------------------------
  * void*    aecmInst            Pointer to the AECM instance
  */
-void WebRtcAecm_Free(void* aecmInst);
+RTC_EXPORT void WebRtcAecm_Free(void* aecmInst);
 
 /*
  * Initializes an AECM instance.
@@ -68,7 +68,7 @@ void WebRtcAecm_Free(void* aecmInst);
  * int32_t        return        0: OK
  *                             -1: error
  */
-int32_t WebRtcAecm_Init(void* aecmInst, int32_t sampFreq);
+RTC_EXPORT int32_t WebRtcAecm_Init(void* aecmInst, int32_t sampFreq);
 
 /*
  * Inserts an 80 or 160 sample block of data into the farend buffer.
@@ -85,7 +85,7 @@ int32_t WebRtcAecm_Init(void* aecmInst, int32_t sampFreq);
  * int32_t        return        0: OK
  *                             -1: error
  */
-int32_t WebRtcAecm_BufferFarend(void* aecmInst,
+RTC_EXPORT int32_t WebRtcAecm_BufferFarend(void* aecmInst,
                                 const int16_t* farend,
                                 size_t nrOfSamples);
 
@@ -114,7 +114,7 @@ int32_t WebRtcAecm_BufferFarend(void* aecmInst,
  * int32_t        return         0: OK
  *                              -1: error
  */
-int32_t WebRtcAecm_Process(void* aecmInst,
+RTC_EXPORT int32_t WebRtcAecm_Process(void* aecmInst,
                            const int16_t* nearendNoisy,
                            const int16_t* nearendClean,
                            int16_t* out,
@@ -135,7 +135,7 @@ int32_t WebRtcAecm_Process(void* aecmInst,
  * int32_t        return        0: OK
  *                             -1: error
  */
-int32_t WebRtcAecm_set_config(void* aecmInst, AecmConfig config);
+RTC_EXPORT int32_t WebRtcAecm_set_config(void* aecmInst, AecmConfig config);
 
 /*
  * This function enables the user to set certain parameters on-the-fly
@@ -151,7 +151,7 @@ int32_t WebRtcAecm_set_config(void* aecmInst, AecmConfig config);
  * int32_t        return        0: OK
  *                             -1: error
  */
-int32_t WebRtcAecm_get_config(void *aecmInst, AecmConfig *config);
+RTC_EXPORT int32_t WebRtcAecm_get_config(void *aecmInst, AecmConfig *config);
 
 /*
  * This function enables the user to set the echo path on-the-fly.
@@ -167,7 +167,7 @@ int32_t WebRtcAecm_get_config(void *aecmInst, AecmConfig *config);
  * int32_t      return          0: OK
  *                             -1: error
  */
-int32_t WebRtcAecm_InitEchoPath(void* aecmInst,
+RTC_EXPORT int32_t WebRtcAecm_InitEchoPath(void* aecmInst,
                                 const void* echo_path,
                                 size_t size_bytes);
 
@@ -186,7 +186,7 @@ int32_t WebRtcAecm_InitEchoPath(void* aecmInst,
  * int32_t      return          0: OK
  *                             -1: error
  */
-int32_t WebRtcAecm_GetEchoPath(void* aecmInst,
+RTC_EXPORT int32_t WebRtcAecm_GetEchoPath(void* aecmInst,
                                void* echo_path,
                                size_t size_bytes);
 
@@ -197,7 +197,7 @@ int32_t WebRtcAecm_GetEchoPath(void* aecmInst,
  * -------------------------------------------------------------------
  * size_t       return          Size in bytes
  */
-size_t WebRtcAecm_echo_path_size_bytes();
+RTC_EXPORT size_t WebRtcAecm_echo_path_size_bytes();
 
 /*
  * Gets the last error code.
@@ -210,7 +210,7 @@ size_t WebRtcAecm_echo_path_size_bytes();
  * -------------------------------------------------------------------
  * int32_t        return        11000-11100: error code
  */
-int32_t WebRtcAecm_get_error_code(void *aecmInst);
+RTC_EXPORT int32_t WebRtcAecm_get_error_code(void *aecmInst);
 
 #ifdef __cplusplus
 }

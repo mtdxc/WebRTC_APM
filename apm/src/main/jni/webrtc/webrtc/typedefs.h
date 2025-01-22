@@ -120,4 +120,21 @@ typedef unsigned __int64    uint64_t;
 #define NO_RETURN
 #endif
 
+
+#ifdef WEBRTC_WIN
+
+#ifdef WEBRTC_LIBRARY_IMPL
+#define RTC_EXPORT __declspec(dllexport)
+#else
+#define RTC_EXPORT __declspec(dllimport)
+#endif
+
+#else  // WEBRTC_WIN
+
+#if __has_attribute(visibility) && defined(WEBRTC_LIBRARY_IMPL)
+#define RTC_EXPORT __attribute__((visibility("default")))
+#endif
+
+#endif  // WEBRTC_WIN
+
 #endif  // WEBRTC_TYPEDEFS_H_

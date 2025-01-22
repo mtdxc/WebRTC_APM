@@ -69,7 +69,7 @@ extern "C" {
  * separately using the WebRtcAec_Init() function. Returns a pointer to the
  * object or NULL on error.
  */
-void* WebRtcAec_Create();
+RTC_EXPORT void* WebRtcAec_Create();
 
 /*
  * This function releases the memory allocated by WebRtcAec_Create().
@@ -78,7 +78,7 @@ void* WebRtcAec_Create();
  * -------------------------------------------------------------------
  * void*        aecInst         Pointer to the AEC instance
  */
-void WebRtcAec_Free(void* aecInst);
+RTC_EXPORT void WebRtcAec_Free(void* aecInst);
 
 /*
  * Initializes an AEC instance.
@@ -94,7 +94,7 @@ void WebRtcAec_Free(void* aecInst);
  * int32_t        return        0: OK
  *                             -1: error
  */
-int32_t WebRtcAec_Init(void* aecInst, int32_t sampFreq, int32_t scSampFreq);
+RTC_EXPORT int32_t WebRtcAec_Init(void* aecInst, int32_t sampFreq, int32_t scSampFreq);
 
 /*
  * Inserts an 80 or 160 sample block of data into the farend buffer.
@@ -111,7 +111,7 @@ int32_t WebRtcAec_Init(void* aecInst, int32_t sampFreq, int32_t scSampFreq);
  * int32_t        return        0: OK
  *                             -1: error
  */
-int32_t WebRtcAec_BufferFarend(void* aecInst,
+RTC_EXPORT int32_t WebRtcAec_BufferFarend(void* aecInst,
                                const float* farend,
                                size_t nrOfSamples);
 
@@ -138,7 +138,7 @@ int32_t WebRtcAec_BufferFarend(void* aecInst,
  * int32_t       return         0: OK
  *                             -1: error
  */
-int32_t WebRtcAec_Process(void* aecInst,
+RTC_EXPORT int32_t WebRtcAec_Process(void* aecInst,
                           const float* const* nearend,
                           size_t num_bands,
                           float* const* out,
@@ -160,7 +160,7 @@ int32_t WebRtcAec_Process(void* aecInst,
  * int            return         0: OK
  *                              -1: error
  */
-int WebRtcAec_set_config(void* handle, AecConfig config);
+RTC_EXPORT int WebRtcAec_set_config(void* handle, AecConfig config);
 
 /*
  * Gets the current echo status of the nearend signal.
@@ -176,7 +176,7 @@ int WebRtcAec_set_config(void* handle, AecConfig config);
  * int            return         0: OK
  *                              -1: error
  */
-int WebRtcAec_get_echo_status(void* handle, int* status);
+RTC_EXPORT int WebRtcAec_get_echo_status(void* handle, int* status);
 
 /*
  * Gets the current echo metrics for the session.
@@ -192,7 +192,7 @@ int WebRtcAec_get_echo_status(void* handle, int* status);
  * int            return         0: OK
  *                              -1: error
  */
-int WebRtcAec_GetMetrics(void* handle, AecMetrics* metrics);
+RTC_EXPORT int WebRtcAec_GetMetrics(void* handle, AecMetrics* metrics);
 
 /*
  * Gets the current delay metrics for the session.
@@ -211,7 +211,7 @@ int WebRtcAec_GetMetrics(void* handle, AecMetrics* metrics);
  * int     return                0: OK
  *                              -1: error
  */
-int WebRtcAec_GetDelayMetrics(void* handle,
+RTC_EXPORT int WebRtcAec_GetDelayMetrics(void* handle,
                               int* median,
                               int* std,
                               float* fraction_poor_delays);
@@ -227,7 +227,7 @@ int WebRtcAec_GetDelayMetrics(void* handle,
  * -------------------------------------------------------------------
  * int32_t        return        11000-11100: error code
  */
-int32_t WebRtcAec_get_error_code(void* aecInst);
+RTC_EXPORT int32_t WebRtcAec_get_error_code(void* aecInst);
 
 // Returns a pointer to the low level AEC handle.
 //
