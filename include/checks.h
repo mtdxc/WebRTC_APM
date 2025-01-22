@@ -44,7 +44,7 @@
 
 // C version. Lacks many features compared to the C++ version, but usage
 // guidelines are the same.
-#define rtc_FatalMessage(file, line, msg)  printf("[%s:%d]%s \n", file, line, msg)
+#define rtc_FatalMessage(file, line, msg)  printf("[%s:%d] %s\n", file, line, msg)
 #define RTC_CHECK(condition)                                                 \
   do {                                                                       \
     if (!(condition)) {                                                      \

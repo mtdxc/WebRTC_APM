@@ -921,7 +921,7 @@ int WebRtcSpl_LevinsonDurbin(const int32_t *R, int16_t *A, int16_t *K,
 
 size_t ComfortNoiseEncoder::Encode(ArrayView<const int16_t> speech,
                                    bool force_sid,
-                                   Buffer *output) {
+                                   rtc::Buffer *output) {
     int16_t arCoefs[WEBRTC_CNG_MAX_LPC_ORDER + 1];
     int32_t corrVector[WEBRTC_CNG_MAX_LPC_ORDER + 1];
     int16_t refCs[WEBRTC_CNG_MAX_LPC_ORDER + 1];

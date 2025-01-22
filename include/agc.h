@@ -12,20 +12,14 @@
 #define MODULES_AUDIO_PROCESSING_AGC_LEGACY_ANALOG_AGC_H_
 
 //#define MIC_LEVEL_FEEDBACK
-#ifdef WEBRTC_AGC_DEBUG_DUMP
-#include <stdio.h>
-#endif
 
-
-#include <stdint.h>  // NOLINT(build/include)
+#include <stdint.h>
 #include <string.h>
+#include <assert.h>
 
 #ifdef WEBRTC_AGC_DEBUG_DUMP
 #include <stdio.h>
 #endif
-
-#include <stdint.h>  // NOLINT(build/include)
-#include <assert.h>
 
 // allpass filter coefficients.
 static const uint16_t kResampleAllpass1[3] = {3284, 24441, 49528};

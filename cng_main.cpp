@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     int sample_rate_hz = 8000;//  8000, 16000,  32000,  48000, 64000
     int16_t speech_data_[640];  // Max size of CNG internal buffers.
     const size_t num_samples_10ms = (sample_rate_hz / 100);
-    Buffer sid_data;
+    rtc::Buffer sid_data;
     int quality = kCNGNumParamsNormal;
     ComfortNoiseEncoder cng_encoder(sample_rate_hz, kSidNormalIntervalUpdate,
                                     quality);

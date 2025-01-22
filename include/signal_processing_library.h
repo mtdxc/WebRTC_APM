@@ -21,31 +21,7 @@
 #include <stdint.h>
 
 #include <stdlib.h>
-
-#include <assert.h>
-// If you for some reson need to know if DCHECKs are on, test the value of
-// RTC_DCHECK_IS_ON. (Test its value, not if it's defined; it'll always be
-// defined, to either a true or a false value.)
-#if !defined(NDEBUG) || defined(DCHECK_ALWAYS_ON)
-#define RTC_DCHECK_IS_ON 1
-#else
-#define RTC_DCHECK_IS_ON 0
-#endif
-
-
-#define RTC_DCHECK(condition)                                                 \
-  do {                                                                        \
-    if (RTC_DCHECK_IS_ON) {                                   \
-      assert(condition); \
-    }                                                                         \
-  } while (0)
-
-#define RTC_DCHECK_EQ(a, b) RTC_DCHECK((a) == (b))
-#define RTC_DCHECK_NE(a, b) RTC_DCHECK((a) != (b))
-#define RTC_DCHECK_LE(a, b) RTC_DCHECK((a) <= (b))
-#define RTC_DCHECK_LT(a, b) RTC_DCHECK((a) < (b))
-#define RTC_DCHECK_GE(a, b) RTC_DCHECK((a) >= (b))
-#define RTC_DCHECK_GT(a, b) RTC_DCHECK((a) > (b))
+#include "checks.h"
 
 // Processor architecture detection.  For more info on what's defined, see:
 //   http://msdn.microsoft.com/en-us/library/b0084kay.aspx
