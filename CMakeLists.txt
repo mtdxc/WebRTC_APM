@@ -17,6 +17,8 @@ else ()
     endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif ()
 
+set(CMAKE_CXX_STANDARD 14)
+
 include_directories(include .)
 add_library(test_common STATIC test_common.cc dr_wav.h timing.h)
 

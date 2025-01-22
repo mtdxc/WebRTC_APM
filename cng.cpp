@@ -9,7 +9,9 @@
  */
 
 #include "cng.h"
+#include <math.h>
 #include <algorithm>
+
 void ExplicitZeroMemory(void *ptr, size_t len){
     memset(ptr, 0, len);
 }
