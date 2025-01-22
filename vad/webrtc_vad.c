@@ -8,11 +8,11 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "include/webrtc_vad.h"
+#include "webrtc_vad.h"
 
 #include <stdlib.h>
 
-#include "include/vad_core.h"
+#include "vad_core.h"
 
 static const int kInitCheck = 42;
 static const int kValidRates[] = {8000, 16000, 32000, 48000};

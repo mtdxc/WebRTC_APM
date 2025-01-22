@@ -17,9 +17,12 @@ else ()
     endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif ()
 
+include_directories(include .)
+
 file(GLOB VAD_SRC
         ${CMAKE_CURRENT_LIST_DIR}/vad/*.c
         ${CMAKE_CURRENT_LIST_DIR}/vad/*.cc
+        signal_processing_library.c
         )
 set(VADCOMPILE_CODE ${VAD_SRC})
 

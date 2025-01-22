@@ -8,7 +8,7 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "include/vad_sp.h"
+#include "vad_sp.h"
 
 // Allpass filter coefficients, upper and lower, in Q13.
 // Upper: 0.64, Lower: 0.17.

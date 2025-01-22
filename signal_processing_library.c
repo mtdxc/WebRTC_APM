@@ -7,7 +7,7 @@
  *  in the file PATENTS.  All contributing project authors may
  *  be found in the AUTHORS file in the root of the source tree.
  */
-#include "include/signal_processing_library.h"
+#include "signal_processing_library.h"
 
 // TODO(bugs.webrtc.org/9553): These function pointers are useless. Refactor
 // things so that we simply have a bunch of regular functions with different

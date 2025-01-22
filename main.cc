@@ -6,7 +6,7 @@
 #define DR_WAV_IMPLEMENTATION
 
 #include "dr_wav.h"
-#include "vad/include/vad.h"
+#include "vad.h"
 
 #ifndef nullptr
 #define nullptr 0
@@ -83,9 +83,7 @@ int vadProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_
 }
 
 void vad(char *in_file) {
-    //音频采样率
     uint32_t sampleRate = 0;
-    //总音频采样数
     uint64_t inSampleCount = 0;
     int16_t *inBuffer = wavRead_int16(in_file, &sampleRate, &inSampleCount);
     //如果加载成功
