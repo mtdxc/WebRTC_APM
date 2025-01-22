@@ -46,3 +46,8 @@ target_link_libraries(cng_main test_common)
 
 add_executable(agc_main agc_main.c agc.c agc.h)
 target_link_libraries(agc_main test_common)
+
+aux_source_directory(ns NS_SRC)
+add_library(ns STATIC ${NS_SRC})
+add_executable(nsp_main nsp_main.cc)
+target_link_libraries(nsp_main test_common ns)
