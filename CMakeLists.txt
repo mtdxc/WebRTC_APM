@@ -37,3 +37,6 @@ target_link_libraries(aecm signal_processing)
 
 add_executable(aecm_main aecm_main.cc)
 target_link_libraries(aecm_main aecm test_common)
+
+add_executable(ns_main ns_main.c noise_suppression.c noise_suppression.h)
+target_link_libraries(ns_main test_common)
