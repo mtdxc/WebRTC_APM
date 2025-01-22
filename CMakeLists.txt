@@ -43,3 +43,6 @@ target_link_libraries(ns_main test_common)
 
 add_executable(cng_main cng_main.cpp cng.cpp cng.h)
 target_link_libraries(cng_main test_common)
+
+add_executable(agc_main agc_main.c agc.c agc.h)
+target_link_libraries(agc_main test_common)
