@@ -40,3 +40,6 @@ target_link_libraries(aecm_main aecm test_common)
 
 add_executable(ns_main ns_main.c noise_suppression.c noise_suppression.h)
 target_link_libraries(ns_main test_common)
+
+add_executable(cng_main cng_main.cpp cng.cpp cng.h)
+target_link_libraries(cng_main test_common)
