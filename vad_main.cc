@@ -4,17 +4,6 @@
 #include "timing.h"
 #include "vad.h"
 #include "test_common.h"
-#ifndef nullptr
-#define nullptr 0
-#endif
-
-#ifndef MIN
-#define  MIN(A, B)        ((A) < (B) ? (A) : (B))
-#endif
-
-#ifndef MAX
-#define  MAX(A, B)        ((A) > (B) ? (A) : (B))
-#endif
 
 int vadProcess(int16_t *buffer, uint32_t sampleRate, size_t samplesCount, int16_t vad_mode, int per_ms_frames) {
     if (buffer == nullptr) return -1;

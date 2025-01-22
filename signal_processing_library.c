@@ -59,6 +59,59 @@ const int8_t kWebRtcSpl_CountLeadingZeros32_Table[64] = {
         4, 11, 23, 31, 3, 7, 10, 16, 22, 30, -1, -1, 2, 6, 13, 9,
         -1, 15, -1, 21, -1, 29, 19, -1, -1, -1, -1, -1, 1, 27, 5, 12,
 };
+/*
+ * Algorithm:
+ * Successive approximation of the equation (root + delta) ^ 2 = N
+ * until delta < 1. If delta < 1 we have the integer part of SQRT (N).
+ * Use delta = 2^i for i = 15 .. 0.
+ *
+ * Output precision is 16 bits. Note for large input values (close to
+ * 0x7FFFFFFF), bit 15 (the highest bit of the low 16-bit half word)
+ * contains the MSB information (a non-sign value). Do with caution
+ * if you need to cast the output to int16_t type.
+ *
+ * If the input value is negative, it returns 0.
+ */
+
+#define WEBRTC_SPL_SQRT_ITER(N)                 \
+  try1 = root + (1 << (N));                     \
+  if (value >= try1 << (N))                     \
+  {                                             \
+    value -= try1 << (N);                       \
+    root |= 2 << (N);                           \
+  }
+
+int32_t WebRtcSpl_SqrtFloor(int32_t value) {
+    int32_t root = 0, try1;
+
+    WEBRTC_SPL_SQRT_ITER (15);
+    WEBRTC_SPL_SQRT_ITER (14);
+    WEBRTC_SPL_SQRT_ITER (13);
+    WEBRTC_SPL_SQRT_ITER (12);
+    WEBRTC_SPL_SQRT_ITER (11);
+    WEBRTC_SPL_SQRT_ITER (10);
+    WEBRTC_SPL_SQRT_ITER (9);
+    WEBRTC_SPL_SQRT_ITER (8);
+    WEBRTC_SPL_SQRT_ITER (7);
+    WEBRTC_SPL_SQRT_ITER (6);
+    WEBRTC_SPL_SQRT_ITER (5);
+    WEBRTC_SPL_SQRT_ITER (4);
+    WEBRTC_SPL_SQRT_ITER (3);
+    WEBRTC_SPL_SQRT_ITER (2);
+    WEBRTC_SPL_SQRT_ITER (1);
+    WEBRTC_SPL_SQRT_ITER (0);
+
+    return root >> 1;
+}
+
+uint32_t WebRtcSpl_DivU32U16(uint32_t num, uint16_t den) {
+    // Guard against division with 0
+    if (den != 0) {
+        return (uint32_t) (num / den);
+    } else {
+        return (uint32_t) 0xFFFFFFFF;
+    }
+}
 
 int32_t WebRtcSpl_DivW32W16(int32_t num, int16_t den) {
     // Guard against division with 0
@@ -70,6 +123,28 @@ int32_t WebRtcSpl_DivW32W16(int32_t num, int16_t den) {
 }
 
 
+static const uint32_t kMaxSeedUsed = 0x80000000;
+
+
+static uint32_t IncreaseSeed(uint32_t *seed) {
+    seed[0] = (seed[0] * ((int32_t) 69069) + 1) & (kMaxSeedUsed - 1);
+    return seed[0];
+}
+
+int16_t WebRtcSpl_RandU(uint32_t *seed) {
+    return (int16_t) (IncreaseSeed(seed) >> 16);
+}
+
+// Creates an array of uniformly distributed variables.
+int16_t WebRtcSpl_RandUArray(int16_t *vector,
+                             int16_t vector_length,
+                             uint32_t *seed) {
+    int i;
+    for (i = 0; i < vector_length; i++) {
+        vector[i] = WebRtcSpl_RandU(seed);
+    }
+    return vector_length;
+}
 
 // TODO(bjorn/kma): Consolidate function pairs (e.g. combine
 //   WebRtcSpl_MaxAbsValueW16C and WebRtcSpl_MaxAbsIndexW16 into a single one.)

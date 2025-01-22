@@ -93,8 +93,14 @@
 #define WEBRTC_SPL_WORD32_MAX (int32_t)0x7fffffff
 #define WEBRTC_SPL_WORD32_MIN (int32_t)0x80000000
 #define WEBRTC_SPL_MIN(A, B) (A < B ? A : B)  // Get min value
+#define WEBRTC_SPL_MAX(A, B) (A > B ? A : B)  // Get max value
 // TODO(kma/bjorn): For the next two macros, investigate how to correct the code
 // for inputs of a = WEBRTC_SPL_WORD16_MIN or WEBRTC_SPL_WORD32_MIN.
+#define WEBRTC_SPL_ABS_W16(a) (((int16_t)a >= 0) ? ((int16_t)a) : -((int16_t)a))
+#define WEBRTC_SPL_ABS_W32(a) (((int32_t)a >= 0) ? ((int32_t)a) : -((int32_t)a))
+
+#define WEBRTC_SPL_UMUL_32_16(a, b) ((uint32_t)((uint32_t)(a) * (uint16_t)(b)))
+#define WEBRTC_SPL_MUL_16_U16(a, b) ((int32_t)(int16_t)(a) * (uint16_t)(b))
 
 #define WEBRTC_SPL_MUL(a, b) ((int32_t)((int32_t)(a) * (int32_t)(b)))
 #define WEBRTC_SPL_MUL_16_U16(a, b) ((int32_t)(int16_t)(a) * (uint16_t)(b))
@@ -111,6 +117,21 @@
 #endif
 
 // clang-format on
+
+#define WEBRTC_SPL_MUL_16_16_RSFT_WITH_ROUND(a, b, c) \
+  ((WEBRTC_SPL_MUL_16_16(a, b) + ((int32_t)(((int32_t)1) << ((c)-1)))) >> (c))
+
+// C + the 32 most significant bits of A * B
+
+#define WEBRTC_SPL_SAT(a, b, c) (b > a ? a : b < c ? c : b)
+
+// Shifting with negative numbers allowed
+// Positive means left shift
+#define WEBRTC_SPL_SHIFT_W32(x, c) ((c) >= 0 ? (x) * (1 << (c)) : (x) >> -(c))
+
+// Shifting with negative numbers not allowed
+// We cannot do casting here due to signed/unsigned problem
+#define WEBRTC_SPL_LSHIFT_W32(x, c) ((x) << (c))
 
 // C + the 32 most significant bits of A * B
 #define WEBRTC_SPL_SCALEDIFF32(A, B, C) \
@@ -130,9 +151,23 @@ extern "C" {
 #include "spl_inl.h"
 
 
-int16_t WebRtcSpl_GetScalingSquare(int16_t *in_vector,
-                                   size_t in_vector_length,
-                                   size_t times);
+//
+// WebRtcSpl_SqrtFloor(...)
+//
+// Returns the square root of the input value |value|. The precision of this
+// function is rounding down integer precision, i.e., sqrt(8) gives 2 as answer.
+// If |value| is a negative number then 0 is returned.
+//
+// Algorithm:
+//
+// An iterative 4 cylce/bit routine
+//
+// Input:
+//      - value     : Value to calculate sqrt of
+//
+// Return value     : Result of the sqrt calculation
+//
+int32_t WebRtcSpl_SqrtFloor(int32_t value);
 
 
 // Minimum and maximum operation functions and their pointers.
@@ -257,6 +292,52 @@ int32_t WebRtcSpl_MinValueW32Neon(const int32_t* vector, size_t length);
 #if defined(MIPS32_LE)
 int32_t WebRtcSpl_MinValueW32_mips(const int32_t* vector, size_t length);
 #endif
+
+// Signal processing operations.
+
+
+// End: Signal processing operations.
+
+// Randomization functions. Implementations collected in
+// randomization_functions.c and descriptions at bottom of this file.
+int16_t WebRtcSpl_RandU(uint32_t *seed);
+int16_t WebRtcSpl_RandUArray(int16_t *vector,
+                             int16_t vector_length,
+                             uint32_t *seed);
+// End: Randomization functions.
+
+
+// Divisions. Implementations collected in division_operations.c and
+// descriptions at bottom of this file.
+uint32_t WebRtcSpl_DivU32U16(uint32_t num, uint16_t den);
+int32_t WebRtcSpl_DivW32W16(int32_t num, int16_t den);
+// End: Divisions.
+
+
+// FFT operations
+
+int WebRtcSpl_ComplexFFT(int16_t vector[], int stages, int mode);
+int WebRtcSpl_ComplexIFFT(int16_t vector[], int stages, int mode);
+
+// Treat a 16-bit complex data buffer |complex_data| as an array of 32-bit
+// values, and swap elements whose indexes are bit-reverses of each other.
+//
+// Input:
+//      - complex_data  : Complex data buffer containing 2^|stages| real
+//                        elements interleaved with 2^|stages| imaginary
+//                        elements: [Re Im Re Im Re Im....]
+//      - stages        : Number of FFT stages. Must be at least 3 and at most
+//                        10, since the table WebRtcSpl_kSinTable1024[] is 1024
+//                        elements long.
+//
+// Output:
+//      - complex_data  : The complex data buffer.
+
+void WebRtcSpl_ComplexBitReverse(int16_t *__restrict complex_data, int stages);
+
+int16_t WebRtcSpl_GetScalingSquare(int16_t *in_vector,
+                                   size_t in_vector_length,
+                                   size_t times);
 
 // Divisions. Implementations collected in division_operations.c and
 // descriptions at bottom of this file.

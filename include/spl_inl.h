@@ -35,6 +35,7 @@ static __inline int WebRtcSpl_CountLeadingZeros32_NotBuiltin(uint32_t n) {
     return kWebRtcSpl_CountLeadingZeros32_Table[(n * 0x8c0b2891) >> 26];
 }
 
+
 // Returns the number of leading zero bits in the argument.
 static __inline int WebRtcSpl_CountLeadingZeros32(uint32_t n) {
 #ifdef __GNUC__
@@ -44,7 +45,6 @@ static __inline int WebRtcSpl_CountLeadingZeros32(uint32_t n) {
     return WebRtcSpl_CountLeadingZeros32_NotBuiltin(n);
 #endif
 }
-
 
 #ifdef WEBRTC_ARCH_ARM_V7
 #include "spl_inl_armv7.h"
@@ -71,6 +71,43 @@ static __inline int16_t WebRtcSpl_NormW32(int32_t a) {
 static __inline int16_t WebRtcSpl_NormU32(uint32_t a) {
     return a == 0 ? 0 : WebRtcSpl_CountLeadingZeros32(a);
 }
+
+// Return the number of steps a can be left-shifted without overflow,
+// or 0 if a == 0.
+static __inline int16_t WebRtcSpl_NormW16(int16_t a) {
+    const int32_t a32 = a;
+    return a == 0 ? 0 : WebRtcSpl_CountLeadingZeros32(a < 0 ? ~a32 : a32) - 17;
+}
+
+static __inline int16_t WebRtcSpl_SatW32ToW16(int32_t value32) {
+    int16_t out16 = (int16_t) value32;
+
+    if (value32 > 32767)
+        out16 = 32767;
+    else if (value32 < -32768)
+        out16 = -32768;
+
+    return out16;
+}
+
+static __inline int32_t WebRtcSpl_AddSatW32(int32_t a, int32_t b) {
+    // Do the addition in unsigned numbers, since signed overflow is undefined
+    // behavior.
+    const int32_t sum = (int32_t) ((uint32_t) a + (uint32_t) b);
+
+    // a + b can't overflow if a and b have different signs. If they have the
+    // same sign, a + b also has the same sign iff it didn't overflow.
+    if ((a < 0) == (b < 0) && (a < 0) != (sum < 0)) {
+        // The direction of the overflow is obvious from the sign of a + b.
+        return sum < 0 ? INT32_MAX : INT32_MIN;
+    }
+    return sum;
+}
+
+static __inline int16_t WebRtcSpl_AddSatW16(int16_t a, int16_t b) {
+    return WebRtcSpl_SatW32ToW16((int32_t) a + (int32_t) b);
+}
+
 
 #endif  // #if !defined(MIPS32_LE)
 

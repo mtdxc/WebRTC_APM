@@ -26,6 +26,14 @@ aux_source_directory(vad VAD_SRC)
 add_library(vad STATIC ${VAD_SRC})
 target_link_libraries(vad signal_processing)
 
-
 add_executable(vad_main vad_main.cc)
 target_link_libraries(vad_main vad test_common)
+
+aux_source_directory(aecm AECM_SRC)
+list(FILTER AECM_SRC EXCLUDE REGEX ".*aecm_core_neon.cc$")
+list(FILTER AECM_SRC EXCLUDE REGEX ".*aecm_core_mips.cc$")
+add_library(aecm STATIC ${AECM_SRC})
+target_link_libraries(aecm signal_processing)
+
+add_executable(aecm_main aecm_main.cc)
+target_link_libraries(aecm_main aecm test_common)
