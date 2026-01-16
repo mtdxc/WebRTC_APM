@@ -218,6 +218,7 @@ class RTC_EXPORT AudioProcessing : public RefCountInterface {
       enum Level { kLow, kModerate, kHigh, kVeryHigh };
       Level level = kModerate;
       bool analyze_linear_aec_output_when_available = false;
+      bool howling_suppression = true;
     } noise_suppression;
 
     // TODO(bugs.webrtc.org/357281131): Deprecated. Stop using and remove.
