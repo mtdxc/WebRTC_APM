@@ -41,7 +41,10 @@ class NoiseSuppressor {
   // Applies noise suppression.
   void Process(AudioBuffer* audio);
 
- private:
+  void set_howling_suppression(bool v) { howling_suppression_ = v; }
+  bool howling_suppression() const { return howling_suppression_; }
+private:
+  volatile bool howling_suppression_ = true;
   const size_t num_bands_;
   const size_t num_channels_;
   const SuppressionParams suppression_params_;
@@ -59,6 +62,10 @@ class NoiseSuppressor {
     std::array<float, kOverlapSize> process_analysis_memory;
     std::array<float, kOverlapSize> process_synthesis_memory;
     std::vector<std::array<float, kOverlapSize>> process_delay_memory;
+    // Howling suppression filter: tracks suppression gain per frequency bin
+    std::array<float, kFftSizeBy2Plus1> howling_suppression_filter;
+    // Counter for detecting consistent howling patterns
+    std::array<int, kFftSizeBy2Plus1> howling_peak_counter;
   };
 
   struct FilterBankState {

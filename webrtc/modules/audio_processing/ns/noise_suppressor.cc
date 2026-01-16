@@ -235,6 +235,117 @@ float ComputeUpperBandsGain(
   return std::min(std::max(gain, minimum_attenuating_gain), 1.f);
 }
 
+/**
+ * DetectAndSuppressHowling
+ *
+ * 检测并抑制啸叫（howling）频谱成分。函数基于当前帧与前一帧的频谱幅值进行归一化比较，
+ * 使用能量阈值与增长率阈值（含滞后）判断每个频率桶是否出现持续的尖峰（啸叫），
+ * 通过 per-bin 计数器跟踪持续性峰值并在计数器达到门限后降低对应频率的增益以抑制啸叫。
+ * 对被判定为啸叫的频点同时对相邻频点施加一定的邻域抑制；当峰值消失时逐步恢复增益以避免泵效应。
+ *
+ * 主要行为要点：
+ * - 先计算当前帧频谱的平均能量并以其对每个频点做归一化（防止全局能量变化影响判决）。
+ * - 若频点能量超过绝对最小功率并同时满足归一化能量与相对于前帧的增长率阈值（开启阈值），
+ *   则认为可能进入啸叫状态；反之若低于关闭阈值则有利于退出啸叫状态（滞后）。
+ * - 对每个频点维护一个计数器（howling_peak_counter）：持续满足“开启”条件则计数器++，
+ *   满足“关闭”条件则计数器--，计数值在 [0, kHowlingPeakCounterMax] 内。
+ * - 当计数器达到帧数门限（kHowlingFrameCountThreshold）时，根据计数器大小计算抑制强度，
+ *   将 howling_suppression_filter 对应位置设置为不大于 1 的抑制增益（最低受限于 kHowlingSuppressionGain）。
+ * - 对邻近频点应用较弱的抑制以覆盖频谱泄漏或带宽扩展的啸叫成分。
+ * - 没有被判定为持续啸叫的频点，其抑制增益逐步以固定步长恢复到 1，以避免快速振荡（pumping）。
+ *
+ * 参数说明（数组长度均为 kFftSizeBy2Plus1）：
+ * @param prev_signal_spectrum
+ *   [in]  前一帧的频谱幅值（按频点的实数能量或幅度表示，长度为 kFftSizeBy2Plus1）。
+ *   用于与当前帧比较以判断能量是否存在快速增长（啸叫的典型表现）。
+ *
+ * @param signal_spectrum
+ *   [in]  当前帧的频谱幅值（按频点的实数能量或幅度表示，长度为 kFftSizeBy2Plus1）。
+ *   用于计算平均能量、归一化并参与啸叫开启/关闭判决。
+ *
+ * @param howling_suppression_filter
+ *   [in,out] 每个频点的抑制增益值，范围约在 [kHowlingSuppressionGain, 1]（1 表示不衰减）。
+ *   - 输入：上帧或初始的抑制增益状态。
+ *   - 输出：更新后的抑制增益；对检测到的啸叫频点设置较低的增益，对未检测到的频点按 kRestoreStep 逐步恢复到 1。
+ *
+ * @param howling_peak_counter
+ *   [in,out] 每个频点的峰值计数器（整型），用于记录该频点在多少连续帧中被判为“可能啸叫”。
+ *   - 输入：上帧的计数器状态。
+ *   - 输出：根据当前帧检测结果递增或递减；当计数器 ≥ kHowlingFrameCountThreshold 时触发抑制。
+ *
+ * 备注（与参数使用相关的常量意义）：
+ * - kHowlingEnergyThresholdOn / Off：归一化能量阈值，用于开启/关闭啸叫检测（含滞后以避免抖动）。
+ * - kHowlingGrowthThresholdOn / Off：相对前帧的增长率阈值，用于识别突增型啸叫（也有开启/关闭的滞后）。
+ * - kHowlingFrameCountThreshold：计数器达到此值才开始应用抑制（防止瞬时峰值触发抑制）。
+ * - kHowlingSuppressionGain：允许的最低抑制增益下界，防止对某个频点抑制过度。
+ * - kHowlingPeakCounterMax：计数器饱和值，防止计数器无限增长。
+ * - kMinAbsPower：判定是否参与检测的最小绝对功率阈值（避免在接近静音时误判）。
+ * - kRestoreStep：非啸叫频点每帧恢复增益的步长（用于平滑恢复，减少“泵”效应）。
+ */
+void DetectAndSuppressHowling(
+    rtc::ArrayView<const float, kFftSizeBy2Plus1> prev_signal_spectrum,
+    rtc::ArrayView<const float, kFftSizeBy2Plus1> signal_spectrum,
+    rtc::ArrayView<float, kFftSizeBy2Plus1> howling_suppression_filter,
+    rtc::ArrayView<int, kFftSizeBy2Plus1> howling_peak_counter) {
+  // Howling detection parameters (with hysteresis)
+  constexpr float kHowlingEnergyThresholdOn = 5.0f;
+  constexpr float kHowlingEnergyThresholdOff = 3.5f;
+  constexpr float kHowlingGrowthThresholdOn = 1.2f;
+  constexpr float kHowlingGrowthThresholdOff = 1.05f;
+  constexpr int kHowlingFrameCountThreshold = 3;
+  constexpr float kHowlingSuppressionGain = 0.3f;
+  constexpr int kHowlingPeakCounterMax = 20;
+  constexpr float kMinAbsPower = 1e-3f;
+  constexpr float kRestoreStep = 0.05f;
+
+  float avg_spectrum_energy = 0.f;
+  for (size_t i = 0; i < kFftSizeBy2Plus1; ++i) {
+    avg_spectrum_energy += signal_spectrum[i];
+  }
+  avg_spectrum_energy /= kFftSizeBy2Plus1;
+
+  if (avg_spectrum_energy < 1e-6f) {
+    return;
+  }
+
+  for (size_t i = 0; i < kFftSizeBy2Plus1; ++i) {
+    float normalized_spectrum = signal_spectrum[i] / avg_spectrum_energy;
+    float prev_spectrum = prev_signal_spectrum[i] / (avg_spectrum_energy + 1e-6f);
+
+    const bool howling_on =
+        signal_spectrum[i] > kMinAbsPower &&
+        normalized_spectrum > kHowlingEnergyThresholdOn &&
+        normalized_spectrum > prev_spectrum * kHowlingGrowthThresholdOn;
+    const bool howling_off =
+        normalized_spectrum < kHowlingEnergyThresholdOff ||
+        normalized_spectrum < prev_spectrum * kHowlingGrowthThresholdOff;
+
+    if (howling_on && howling_peak_counter[i] < kHowlingPeakCounterMax) {
+      howling_peak_counter[i]++;
+    } else if (howling_peak_counter[i] > 0 && howling_off) {
+      howling_peak_counter[i]--;
+    }
+
+    if (howling_peak_counter[i] >= kHowlingFrameCountThreshold) {
+      float suppression_intensity =
+          std::min(1.f, static_cast<float>(howling_peak_counter[i]) / 10.f);
+      howling_suppression_filter[i] =
+          std::max(kHowlingSuppressionGain, 1.f - 0.7f * suppression_intensity);
+
+      float neighbor_suppression = 1.f - 0.3f * suppression_intensity;
+      if (i > 0 && howling_peak_counter[i - 1] > neighbor_suppression) {
+        howling_suppression_filter[i - 1] = neighbor_suppression;
+      }
+      if (i + 1 < kFftSizeBy2Plus1 && howling_peak_counter[i + 1] > neighbor_suppression) {
+        howling_suppression_filter[i + 1] = neighbor_suppression;
+      }
+    } else if (howling_suppression_filter[i] < 1.f) {
+      // Gradually restore gain with a smaller step to avoid pumping.
+      howling_suppression_filter[i] += kRestoreStep;
+    }
+  }
+}
+
 }  // namespace
 
 NoiseSuppressor::ChannelState::ChannelState(
@@ -247,6 +358,8 @@ NoiseSuppressor::ChannelState::ChannelState(
   prev_analysis_signal_spectrum.fill(1.f);
   process_analysis_memory.fill(0.f);
   process_synthesis_memory.fill(0.f);
+  howling_suppression_filter.fill(1.f);
+  howling_peak_counter.fill(0);
   for (auto& d : process_delay_memory) {
     d.fill(0.f);
   }
@@ -427,6 +540,13 @@ void NoiseSuppressor::Process(AudioBuffer* audio) {
     std::array<float, kFftSizeBy2Plus1> signal_spectrum;
     ComputeMagnitudeSpectrum(filter_bank_states[ch].real,
                              filter_bank_states[ch].imag, signal_spectrum);
+    // Detect and suppress howling patterns
+    if (howling_suppression_) {
+        DetectAndSuppressHowling(
+            channels_[ch]->prev_analysis_signal_spectrum, signal_spectrum,
+            channels_[ch]->howling_suppression_filter,
+            channels_[ch]->howling_peak_counter);
+    }
 
     // Compute the frequency domain gain filter for noise attenuation.
     channels_[ch]->wiener_filter.Update(
@@ -458,10 +578,14 @@ void NoiseSuppressor::Process(AudioBuffer* audio) {
   }
 
   for (size_t ch = 0; ch < num_channels_; ++ch) {
-    // Apply the filter to the lower band.
+    // Apply the filter to the lower band with howling suppression.
     for (size_t i = 0; i < kFftSizeBy2Plus1; ++i) {
-      filter_bank_states[ch].real[i] *= filter[i];
-      filter_bank_states[ch].imag[i] *= filter[i];
+      // Combine noise suppression filter with howling suppression filter
+      float combined_filter = filter[i];
+      if (howling_suppression_)
+        combined_filter *= channels_[ch]->howling_suppression_filter[i];
+      filter_bank_states[ch].real[i] *= combined_filter;
+      filter_bank_states[ch].imag[i] *= combined_filter;
     }
   }
 

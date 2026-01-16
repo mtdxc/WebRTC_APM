@@ -579,7 +579,8 @@ void AudioProcessingImpl::ApplyConfig(const AudioProcessing::Config& config) {
 
   const bool ns_config_changed =
       config_.noise_suppression.enabled != config.noise_suppression.enabled ||
-      config_.noise_suppression.level != config.noise_suppression.level;
+      config_.noise_suppression.level != config.noise_suppression.level ||
+      config_.noise_suppression.howling_suppression != config.noise_suppression.howling_suppression;
 
   const bool ts_config_changed = config_.transient_suppression.enabled !=
                                  config.transient_suppression.enabled;
@@ -1859,6 +1860,7 @@ void AudioProcessingImpl::InitializeNoiseSuppressor() {
     cfg.target_level = map_level(config_.noise_suppression.level);
     submodules_.noise_suppressor = std::make_unique<NoiseSuppressor>(
         cfg, proc_sample_rate_hz(), num_proc_channels());
+    submodules_.noise_suppressor->set_howling_suppression(config_.noise_suppression.howling_suppression);
   }
 }
 

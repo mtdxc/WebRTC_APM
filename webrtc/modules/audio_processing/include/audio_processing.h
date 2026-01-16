@@ -254,6 +254,7 @@ class RTC_EXPORT AudioProcessing : public rtc::RefCountInterface {
       bool enabled = false;
       enum Level { kLow, kModerate, kHigh, kVeryHigh };
       Level level = kModerate;
+      bool howling_suppression = true;
       bool analyze_linear_aec_output_when_available = false;
     } noise_suppression;
 
