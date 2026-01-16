@@ -4,7 +4,7 @@ subdir('rtc_base')
 subdir('api')
 subdir('system_wrappers')
 subdir('common_audio')
-
+subdir('audio')
 subdir('third_party/pffft')
 subdir('third_party/rnnoise')
 

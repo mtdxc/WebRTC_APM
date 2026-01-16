@@ -15,3 +15,81 @@ source_set("rnn_vad") {
     "src/rnn_vad_weights.h",
   ]
 }
+
+config("rnnoise_public_config"){
+  include_dirs = [
+    "include",
+  ]
+}
+
+config("rnnoise_config"){
+  cflags_c = [
+    "-Wno-strict-prototypes",
+    "-Wno-undef",
+  ]
+  include_dirs = [
+    "include",
+    "src",
+  ]
+}
+
+copy("rn_model"){
+  sources = [
+    "model/weights_blob_little.bin",
+    "model/weights_blob.bin",
+  ]
+  outputs = [ "$root_build_dir/model/{{source_file_part}}" ]
+}
+
+static_library("rnnoise") {
+  visibility = [ "*" ]
+  configs += [ 
+    ":rnnoise_config",
+  ]
+  deps = [".:rn_model"]
+  public_configs = [":rnnoise_public_config"]
+  sources = [
+    "include/rnnoise.h",
+    "src/celt_lpc.c",
+    "src/denoise.c",
+    "src/kiss_fft.c",
+    "src/pitch.c",
+    "src/rnn.c",
+    "src/nnet.c",
+    "src/nnet_default.c",
+    "src/parse_lpcnet_weights.c",
+    "src/rnnoise_tables.c",
+    "src/rnnoise_data.c",
+  ]
+
+  defines = []
+  if (current_cpu == "x86" || current_cpu == "x64") {
+    defines += ["RNN_ENABLE_X86_RTCD", "CPU_INFO_BY_ASM"]
+    if (is_win) {
+      cflags = [ "/arch:AVX", "/arch:AVX2" ]
+    } else {
+      cflags = [
+        "-mavx",
+        "-mavx2",
+        "-mfma",
+      ]
+    }
+    sources += [
+      "src/x86/x86cpu.c",
+      "src/x86/x86_dnn_map.c",
+      "src/x86/nnet_avx2.c",
+      "src/x86/nnet_sse4_1.c",
+    ]
+  }
+}
+
+executable("write_weights") {
+  testonly = true
+  sources = [
+    "src/write_weights.c",
+  ]
+
+  deps = [
+    ":rnnoise",
+  ]
+}

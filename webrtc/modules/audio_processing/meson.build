@@ -143,6 +143,7 @@ webrtc_audio_processing_sources = [
   'vad/vad_audio_proc.cc',
   'vad/vad_circular_buffer.cc',
   'vad/voice_activity_detector.cc',
+  'RnNoiseProcessor.cc',
 ]
 
 webrtc_audio_processing_include_headers = [
@@ -197,6 +198,7 @@ libwebrtc_audio_processing = library(apm_project_name,
       api_dep,
       system_wrappers_dep,
       common_audio_dep,
+      audio_dep,
       isac_vad_dep,
       pffft_dep,
       rnnoise_dep,
