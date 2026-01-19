@@ -95,7 +95,7 @@ elif (host_system == 'dragonfly' or host_system == 'freebsd' or
   os_deps += [dependency('threads')]
   have_posix = true
 elif host_system == 'windows'
-  platform_cflags += ['-DWEBRTC_WIN', '-D_WIN32']
+  platform_cflags += ['-DWEBRTC_WIN', '-D_WIN32', '-U__STRICT_ANSI__', '-DNOMINMAX', '-D_USE_MATH_DEFINES']
   # this one is for MinGW to get format specifiers from inttypes.h in C++
   platform_cflags += ['-D__STDC_FORMAT_MACROS=1']
   # Avoid min/max from windows.h which breaks std::min/max
@@ -156,7 +156,7 @@ if ['x86', 'x86_64'].contains(host_machine.cpu_family())
   # Unfortunately, a bunch of SSE code is inline with the runtime detection,
   # and we can't support that on systems that don't support SSE.
   have_avx2 = true
-  arch_cflags += ['-DWEBRTC_ENABLE_AVX2']
+  arch_cflags += ['-DWEBRTC_ENABLE_AVX2', '-D__SSE4_1__', '-D__AVX2__']
   if get_option('inline-sse')
     have_inline_sse = true
   else
@@ -215,3 +215,4 @@ audio_processing_dep = declare_dependency(
 meson.override_dependency(apm_project_name, audio_processing_dep)
 
 subdir('examples')
+subdir('imgui')
