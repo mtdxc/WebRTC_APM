@@ -137,7 +137,7 @@ elif host_system == 'linux'
   os_deps += [dependency('threads')]
   have_posix = true
 elif host_system == 'windows'
-  platform_cflags += ['-DWEBRTC_WIN', '-D_WIN32', '-U__STRICT_ANSI__']
+  platform_cflags += ['-DWEBRTC_WIN', '-D_WIN32', '-U__STRICT_ANSI__', '-DNOMINMAX', '-D_USE_MATH_DEFINES']
   # this one is for MinGW to get format specifiers from inttypes.h in C++
   platform_cflags += ['-D__STDC_FORMAT_MACROS=1']
   os_deps += [cc.find_library('winmm')]
@@ -188,7 +188,7 @@ if ['x86', 'x86_64'].contains(host_machine.cpu_family())
   # This is unconditionally enabled for now, actual usage is determined by
   # runtime CPU detection, so we're just assuming the compiler supports avx2
   have_avx2 = true
-  arch_cflags += ['-DWEBRTC_ENABLE_AVX2']
+  arch_cflags += ['-DWEBRTC_ENABLE_AVX2', '-D__SSE4_1__', '-D__AVX2__']
 endif
 
 neon_opt = get_option('neon')
@@ -250,3 +250,5 @@ audio_coding_dep = declare_dependency(link_with : libwebrtc_audio_coding,
     include_directories : [webrtc_inc])
 
 meson.override_dependency(ac_project_name, audio_coding_dep)
+
+subdir('imgui')
