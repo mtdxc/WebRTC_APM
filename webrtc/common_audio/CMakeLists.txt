@@ -129,11 +129,13 @@ if (NOT have_arm)
 endif ()
 
 
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(x86_64)|(i686)")
+if (have_avx2)
     LIST(APPEND COMMON_AUDIO_SRC
             "third_party/ooura/fft_size_128/ooura_fft_sse2.cc"
             "fir_filter_sse.cc"
             "fir_filter_sse.h"
+            "fir_filter_avx2.cc"
+            "fir_filter_avx2.h"
             "resampler/sinc_resampler_sse.cc"
             "resampler/sinc_resampler_avx2.cc"
             )

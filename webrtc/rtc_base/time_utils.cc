@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <sys/timeb.h>
+#pragma comment(lib, "winmm.lib")
 // clang-format on
 #endif
 

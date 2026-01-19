@@ -1,6 +1,8 @@
 file(GLOB_RECURSE RTC_BASE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/*.c" "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
 
-if(NOT WIN32)
+if(WIN32)
+    list(REMOVE_ITEM RTC_BASE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/synchronization/rw_lock_posix.cc")
+else()
     list(REMOVE_ITEM RTC_BASE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/synchronization/rw_lock_win.cc")
 endif()
 

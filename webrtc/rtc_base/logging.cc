@@ -15,7 +15,7 @@
 #if RTC_LOG_ENABLED()
 
 #if defined(WEBRTC_WIN)
-#include <windows.h>
+//#include <windows.h>
 #if _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
