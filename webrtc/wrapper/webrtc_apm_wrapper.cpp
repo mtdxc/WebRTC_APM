@@ -72,3 +72,20 @@ void webrtc_apm_process_stream(void* apm, const float* const* src, float* const*
 
   handle->apm->ProcessStream(src, handle->input_stream_config, handle->output_stream_config, dest);
 }
+
+void webrtc_apm_process_reverse_stream2(void* apm, const short* src, short* dest) {
+    auto* handle = static_cast<WebRTCApm*>(apm);
+    if (!handle) {
+        return;
+    }
+    handle->apm->ProcessReverseStream(src, handle->input_stream_config, handle->output_stream_config, dest);
+}
+
+void webrtc_apm_process_stream2(void* apm, const short* src, short* dest) {
+    auto* handle = static_cast<WebRTCApm*>(apm);
+    if (!handle) {
+        return;
+    }
+
+    handle->apm->ProcessStream(src, handle->input_stream_config, handle->output_stream_config, dest);
+}

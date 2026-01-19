@@ -32,6 +32,9 @@ void webrtc_apm_process_reverse_stream(void *apm, const float *const *src,
 void webrtc_apm_process_stream(void *apm, const float *const *src,
                                float *const *dest);
 
+void webrtc_apm_process_reverse_stream2(void* apm, const short* src, short* dest);
+void webrtc_apm_process_stream2(void* apm, const short* src, short* dest);
+
 #ifdef __cplusplus
 }
 #endif
