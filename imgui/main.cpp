@@ -11,6 +11,8 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_opengl3.h"
 #include "modules/audio_processing/include/audio_processing.h"
+#include "modules/audio_processing/RnNoiseProcessor.h"
+#include <fstream>
 #include "IconsFontAwesome6.h"
 #ifdef _WIN32
 #include <io.h>
@@ -35,6 +37,20 @@
 #ifdef __EMSCRIPTEN__
 #include "../libs/emscripten/emscripten_mainloop_stub.h"
 #endif
+std::string genFileName(const char* prefix, const char* ext = "txt") {
+    time_t timeValue = 0;
+    time(&timeValue);
+    struct tm* p = localtime(&timeValue);
+    char fname[128] = { 0 };
+    snprintf(fname, sizeof(fname), "%s-%d-%d_%d-%d-%d.%s", prefix,
+        p->tm_mon + 1,
+        p->tm_mday,
+        p->tm_hour,
+        p->tm_min,
+        p->tm_sec,
+        ext);
+    return fname;
+}
 
 class SDLSurfaceTexture {
 private:
@@ -206,6 +222,291 @@ public:
     }
 };
 
+webrtc::AudioProcessing::Config config_;
+void loadApConfig(webrtc::AudioProcessing* apm) {
+    if (apm) {
+        config_ = apm->GetConfig();
+    }
+}
+
+void ShowApConfig(webrtc::AudioProcessing* apm) {
+    ImGui::Begin("audio process", nullptr);
+    if (auto* pipeline = &config_.pipeline) {
+        ImGui::LabelText("##pipeine", "pipeine");
+        ImGui::Indent();
+        static const char* strDownmixMethod[] = { "AverageChannels", "UseFirstChannel" };
+        ImGui::Combo("capture_downmix_method", (int*)&pipeline->capture_downmix_method, strDownmixMethod, 2);
+        ImGui::SetNextItemWidth(80); ImGui::InputInt("maximum_internal_processing_rate", &pipeline->maximum_internal_processing_rate, 0, 0);
+        ImGui::Checkbox("multi_channel_render", &pipeline->multi_channel_render);
+        ImGui::Checkbox("multi_channel_capture", &pipeline->multi_channel_capture);
+        ImGui::Unindent();
+    }
+
+    auto pre = &config_.pre_amplifier;
+    ImGui::Checkbox("PreAmplifier", &pre->enabled);
+    if (pre && pre->enabled) {
+        ImGui::Indent();
+        ImGui::SetNextItemWidth(80);
+        ImGui::InputFloat("fixed_gain_factor", &pre->fixed_gain_factor);
+        ImGui::Unindent();
+    }
+    
+    auto cla = &config_.capture_level_adjustment;
+    ImGui::Checkbox("capture_level_adjustment", &cla->enabled);
+    if (cla && cla->enabled) {
+        ImGui::Indent();
+        ImGui::PushItemWidth(80);
+        ImGui::InputFloat("pre_gain_factor", &cla->pre_gain_factor);
+        ImGui::InputFloat("post_gain_factor", &cla->post_gain_factor);
+        ImGui::Checkbox("analog_mic_gain_emulation", &cla->analog_mic_gain_emulation.enabled);
+        if (cla->analog_mic_gain_emulation.enabled) {
+            ImGui::Indent();
+            ImGui::SetNextItemWidth(80);
+            ImGui::InputInt("initial_level", &cla->analog_mic_gain_emulation.initial_level, 0, 0);
+            ImGui::Unindent();
+        }
+        ImGui::PopItemWidth();
+        ImGui::Unindent();
+    }
+    
+    auto hpf = &config_.high_pass_filter;
+    ImGui::Checkbox("high pass filter", &hpf->enabled);
+    if (hpf && hpf->enabled) {
+        ImGui::Indent();
+        ImGui::Checkbox("apply in full band", &hpf->apply_in_full_band);
+        ImGui::Unindent();
+    }
+
+    auto ec = &config_.echo_canceller;
+    ImGui::Checkbox("echo_canceller", &ec->enabled);
+    if (ec && ec->enabled) {
+        ImGui::Indent();
+        ImGui::Checkbox("aecm", &ec->mobile_mode);
+        ImGui::Checkbox("export_linear_aec_output", &ec->export_linear_aec_output);
+        ImGui::Checkbox("enforce_high_pass_filtering", &ec->enforce_high_pass_filtering);
+        ImGui::Unindent();
+    }
+
+    auto ns = &config_.noise_suppression;
+    ImGui::Checkbox("noise_suppression", &ns->enabled);
+    if (ns && ns->enabled) {
+        ImGui::Indent();
+        static const char* level[] = {"Low", "Moderate", "High", "VeryHigh"};
+        ImGui::Combo("nslevel", (int*) & ns->level, level, 4);
+        ImGui::Checkbox("analyze_linear_aec_output_when_available", &ns->analyze_linear_aec_output_when_available);
+        ImGui::Checkbox("howling_suppression", &ns->howling_suppression);
+        ImGui::Unindent();
+    }
+
+    ImGui::Checkbox("transient_suppression", &config_.transient_suppression.enabled);
+    
+    auto gc1 = &config_.gain_controller1;
+    ImGui::Checkbox("gain_controller1", &gc1->enabled);
+    if (gc1 && gc1->enabled) {
+        ImGui::Indent();
+        static const char* strMode[] = { "AdaptiveAnalog", "AdaptiveDigital", "FixedDigital" };
+        ImGui::Combo("gc1mode", (int*)&gc1->mode, strMode, 3);
+        ImGui::PushItemWidth(60);
+        ImGui::InputInt("target_level_dbfs", &gc1->target_level_dbfs, 0, 0);
+        ImGui::InputInt("compression_gain_db", &gc1->compression_gain_db, 0, 0);
+        ImGui::PopItemWidth();
+        ImGui::Checkbox("enable limiter", &gc1->enable_limiter);
+
+        auto gagc = &gc1->analog_gain_controller;
+        ImGui::Checkbox("analog_gain_controller", &gagc->enabled);
+        if (gagc && gagc->enabled) {
+            ImGui::Indent();
+            ImGui::Checkbox("digital_adaptive", &gagc->enable_digital_adaptive);
+            ImGui::PushItemWidth(60);
+            ImGui::InputInt("startup_min_volume", &gagc->startup_min_volume, 0, 0);
+            ImGui::InputInt("clipped_level_min", &gagc->clipped_level_min, 0, 0);
+            
+            ImGui::InputInt("clipped_level_step", &gagc->clipped_level_step, 0, 0);
+            ImGui::InputInt("clipped_wait_frames", &gagc->clipped_wait_frames, 0, 0);
+            ImGui::InputFloat("clipped_ratio_threshold", &gagc->clipped_ratio_threshold);
+            ImGui::PopItemWidth();
+
+            auto gapcp = &gagc->clipping_predictor;
+            ImGui::Checkbox("clipping_predictor", &gapcp->enabled);
+            if (gapcp && gapcp->enabled) {
+                ImGui::Indent();
+                static const char* cpMode[] = {"ClippingEventPrediction", "AdaptiveStepClippingPeakPrediction", "FixedStepClippingPeakPrediction"};
+                ImGui::Combo("cpmode", (int*)&gapcp->mode, cpMode, 3);
+                ImGui::PushItemWidth(60);
+                ImGui::InputInt("window_length", &gapcp->window_length, 0, 0);
+                ImGui::InputInt("reference_window_length", &gapcp->reference_window_length, 0, 0);
+                ImGui::InputInt("reference_window_delay", &gapcp->reference_window_delay, 0, 0);
+                ImGui::InputFloat("clipping_threshold", &gapcp->clipping_threshold);
+                ImGui::InputFloat("crest_factor_margin", &gapcp->crest_factor_margin);
+                ImGui::Checkbox("use_predicted_step", &gapcp->use_predicted_step);
+                ImGui::PopItemWidth();
+                ImGui::Unindent();
+            }
+            ImGui::Unindent();
+        }
+        ImGui::Unindent();
+    }
+
+    auto gc2 = &config_.gain_controller2;
+    ImGui::Checkbox("gain_controller2", &gc2->enabled);
+    if (gc2 && gc2->enabled) {
+        ImGui::Indent();
+        ImGui::Checkbox("input_volume_controller", &gc2->input_volume_controller.enabled);
+        auto gc2ad = &gc2->adaptive_digital;
+        ImGui::Checkbox("adaptive_digital", &gc2ad->enabled);
+        if (gc2ad && gc2ad->enabled) {
+            ImGui::Indent();
+            ImGui::PushItemWidth(80);
+            ImGui::InputFloat("headroom_db", &gc2ad->headroom_db);
+            ImGui::InputFloat("max_gain_db", &gc2ad->max_gain_db);
+            ImGui::InputFloat("initial_gain_db", &gc2ad->initial_gain_db);
+            ImGui::InputFloat("max_gain_change_db_per_second", &gc2ad->max_gain_change_db_per_second);
+            ImGui::InputFloat("max_output_noise_level_dbfs", &gc2ad->max_output_noise_level_dbfs);
+            ImGui::PopItemWidth();
+            ImGui::Unindent();
+        }
+        ImGui::SetNextItemWidth(80);
+        ImGui::InputFloat("fixed digital gain db", &gc2->fixed_digital.gain_db);
+        ImGui::Unindent();
+    }
+
+    if (ImGui::Button("Apply")) {
+      if (apm) {
+          std::cout << config_.ToString();
+          apm->ApplyConfig(config_); 
+          loadApConfig(apm);
+      }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Refresh")) {
+      loadApConfig(apm);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save")) {
+      std::string fname = genFileName("config");
+      std::cout << "ap config will be save in " << fname;
+      std::ofstream fs(fname);
+      fs << config_.ToString();
+    }
+    ImGui::End();
+}
+
+
+#if 0
+void ShowRnNoiseCfg() {
+  auto pcs = callback_->getRnPcs();
+  if (!pcs)
+    return;
+  ImGui::Begin("rnnoise");
+  static int item_current = 0;
+  if (auto path = pcs->modelPath()) {
+    for (int i = 0; i < (int)rn_models_.size(); ++i) {
+      if (strstr(path, rn_models_[i].c_str()) != nullptr) {
+        item_current = i;
+        break;
+  }
+    }
+  }
+  if (ImGui::BeginCombo("##Combo", rn_models_[item_current].c_str())) {
+    for (int i = 0; i < (int)rn_models_.size(); ++i) {
+      bool is_selected = i == item_current;
+      if (ImGui::Selectable(rn_models_[i].c_str(), is_selected)) {
+        item_current = i;
+        if (i)
+          pcs->loadModel((rn_dir_ + rn_models_[i]).c_str());
+        else
+          pcs->loadModel("");
+      }
+      if (is_selected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+  if (pcs->ok()) {
+    ImGui::SameLine();
+    ImGui::Text("loaded");
+  }
+  ImGui::End();
+}
+
+void loadRnModel() {
+  rn_models_.clear();
+  char fontPath[256];
+  rn_dir_ = AppPath(fontPath, "rnmodel/");
+  rtc::Filesystem::MakeFolder(rn_dir_);
+  rn_models_.push_back("disable");
+  rtc::DirectoryIterator di;
+  if (di.Iterate(rn_dir_)) {
+    while (di.Next()) {
+      if (di.IsDirectory())
+        continue;
+      else if (di.Name().length() > 4 &&
+               di.Name().substr(di.Name().length() - 4) == ".bin") {
+        rn_models_.push_back(di.Name());
+      }
+    }
+  }
+}
+
+void DrawOptionalBool(const char* label, absl::optional<bool>& value)
+{
+  int tvalue = value.has_value() + value.value_or(0);
+  static const char* tBoolMap[] = {"unset", "false", "true"};
+  ImGui::SetNextItemWidth(80);
+  if (ImGui::Combo(label, &tvalue, tBoolMap, 3)) {
+    if(tvalue==0){
+      value.reset();
+    }
+    else {
+      value = tvalue - 1;
+    }
+  }
+}
+
+void showAudioOption() {
+  ImGui::Begin("audioOption");
+  //DrawOptionalBool("disable_buildin_process", option_.disable_buildin_process);
+  DrawOptionalBool("echo_cancellation", option_.echo_cancellation);
+#if defined(WEBRTC_IOS)
+  // Forces software echo cancellation on iOS. This is a temporary workaround
+  // (until Apple fixes the bug) for a device with non-functioning AEC. May
+  // improve performance on that particular device, but will cause
+  // unpredictable behavior in all other cases. See
+  // http://bugs.webrtc.org/8682.
+  DrawOptionalBool("ios_force_software_aec_HACK", &option_.ios_force_software_aec_HACK);
+#endif
+  DrawOptionalBool("auto_gain_control", option_.auto_gain_control);
+  DrawOptionalBool("noise_suppression", option_.noise_suppression);
+  DrawOptionalBool("highpass_filter", option_.highpass_filter);
+  DrawOptionalBool("stereo_swapping", option_.stereo_swapping);
+  DrawOptionalBool("ajb_fast_accelerate", option_.audio_jitter_buffer_fast_accelerate);
+#if 0
+  ImGui::PushItemWidth(60);
+  ImGui::InputInt("ajb_max_packets", option_.audio_jitter_buffer_max_packets, 0, 0);
+  ImGui::InputInt("ajb_min_delay_ms", option_.audio_jitter_buffer_min_delay_ms, 0, 0);
+  ImGui::PopItemWidth();
+  DrawOptionalBool("audio_network_adaptor", option_.audio_network_adaptor);
+  ImGui::Text("%s", option_.audio_network_adaptor_config.c_str());
+#endif
+  DrawOptionalBool("init_recording_on_send", option_.init_recording_on_send);
+  if (ImGui::Button("reset")) {
+    option_ = {};
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Save")) {
+    std::string fname = genFileName("option");
+    RTC_LOG(LS_INFO) << "audio option will be save in " << fname;
+    std::ofstream fs(fname);
+    fs << option_.ToString();
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Apply")) {
+    callback_->SetAudioOption(option_);
+  }
+  ImGui::End();
+}
+#endif
+
 class SDLDevice {
     std::unique_ptr<SDL_Camera, CameraClose> camera_;
     std::unique_ptr<SDL_AudioStream, AudioStreamClose> mic_stream_, spk_stream_;
@@ -224,6 +525,7 @@ public:
         if (!apm_) {
             input_config_ = output_config_ = webrtc::StreamConfig(sample_rate, channels);
             apm_ = webrtc::AudioProcessingBuilder().Create();
+            loadApConfig(apm_.get());
         }
         return apm_ != nullptr;
     }
@@ -460,7 +762,7 @@ int main(int, char**)
         io.Fonts->AddFontFromFileTTF(DEFALUT_FONT_PATH, 20.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
     }
     if (0 == access(FONT_ICON_FILE_NAME_FAS, 0)) {
-        float baseFontSize = 13.0f; // 13.0f is the size of the default font. Change to the font size you use.
+    float baseFontSize = 13.0f; // 13.0f is the size of the default font. Change to the font size you use.
         float iconFontSize = baseFontSize * 2.0f / 3.0f; // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
         // merge in icons from Font Awesome
         static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
@@ -615,6 +917,7 @@ int main(int, char**)
                     }
                 }
                 if (auto fs = device.apm()) {
+                    ShowApConfig(fs);
                 }
             }
 
