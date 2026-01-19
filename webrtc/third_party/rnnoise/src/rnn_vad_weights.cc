@@ -1,4 +1,4 @@
-#include "third_party/rnnoise/src/rnn_vad_weights.h"
+#include "rnn_vad_weights.h"
 
 namespace rnnoise {
 

@@ -69,7 +69,7 @@ if(have_arm64)
 endif()
 message(STATUS "${CMAKE_SYSTEM_PROCESSOR}")
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(x86_64)|(i686)|(AMD64)")
-    add_definitions(-DWEBRTC_ENABLE_AVX2)
+    add_definitions(-DWEBRTC_ENABLE_AVX2 -D__AVX2__ -D__SSE4_1__)
     set(have_avx2 TRUE)
 endif()
 

@@ -12,7 +12,7 @@ if (have_neon)
 endif()
 
 if (have_avx2)
-    add_compile_options(-mavx -mfma)
+    add_compile_options(-mavx -mfma -mavx2)
 endif()
 
 set(WBRTC_APM_SRC
@@ -38,6 +38,7 @@ endif()
 
 target_include_directories(webrtc_apm_wrapper PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/rnnoise/src"
         )
 
 install(TARGETS webrtc_apm_wrapper
