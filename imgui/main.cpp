@@ -8,8 +8,8 @@
 // - Introduction, links and more at the top of imgui.cpp
 
 #include "imgui.h"
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_opengl3.h"
+#include "backends/imgui_impl_sdl3.h"
+#include "backends/imgui_impl_opengl3.h"
 #include "modules/audio_processing/include/audio_processing.h"
 #include "IconsFontAwesome6.h"
 #include "modules/audio_processing/RnNoiseProcessor.h"

@@ -95,4 +95,5 @@ option(BUILD_EXAMPLE "Build example" OFF)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_EXAMPLE)
     add_subdirectory(example)
+    add_subdirectory(imgui)
 endif ()
