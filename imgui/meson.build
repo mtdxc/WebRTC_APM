@@ -13,7 +13,6 @@ if fs.exists(join_paths(meson.current_source_dir(), font_file))
   install_data(font_file, install_dir: get_option('bindir'))
 endif
 
-executable('imgui_demo', 'main.cpp',
+executable('imgui_demo', 'main.cpp', 'MdDoc.cpp',
   dependencies: [sdl3_dep, imgui.get_variable('imgui_dep'), audio_processing_dep],
   install: true)
-
