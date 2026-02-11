@@ -78,6 +78,38 @@ int ReadFileContent(FILE* fp, std::string& data) {
     return fread(&data[0], 1, data.size(), fp);
 }
 
+ImgItem::~ImgItem() {
+    if (id) {
+        glDeleteTextures(1, (GLuint*)&id);
+    }
+}
+
+bool ImgItem::Open(FILE* fp) { 
+    unsigned char* image_data = stbi_load_from_file(fp, &width, &height, NULL, 4);
+    fclose(fp);
+    if (image_data == NULL) {
+        return false;
+    }
+
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);
+
+    // 设置纹理参数
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // 上传纹理数据
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+                    GL_UNSIGNED_BYTE, image_data);
+
+    stbi_image_free(image_data);
+    touch();
+    return true;
+}
+
+
 void LinkCallback(ImGui::MarkdownLinkCallbackData data)
 {
     std::string url(data.link, data.linkLength);
@@ -163,8 +195,12 @@ bool MdDoc::Open(const char* path) {
     if (auto fp = FileOpen(path, "r")) {
         ReadFileContent(fp, content_);
         fclose(fp);
-        dir_ = parentDir(path);
-        name_ = path + dir_.length() + 1;
+        name_ = path;
+        auto pos = name_.find_last_of("/\\");
+        if (pos != std::string::npos) {
+            dir_ = name_.substr(0, pos + 1);
+            name_ = name_.substr(pos + 1);
+        }
         opened_ = true;
         return true;
     }
@@ -172,56 +208,60 @@ bool MdDoc::Open(const char* path) {
 }
 
 void MdDoc::Close() {
-    for (auto it : img_map_) {
-        if (GLuint textureID = it.second->user_texture_id) {
-            glDeleteTextures(1, &textureID);
-        }
-        delete it.second;
-    }
     img_map_.clear();
     content_ = dir_ = name_ = "";
 }
 
 bool MdDoc::getImage(const std::string& path, ImGui::MarkdownImageData& data) {
+    ImgItem::Ptr img = nullptr;
     auto it = img_map_.find(path);
-    if (it != img_map_.end()) {
-        data = *it->second;
-        return true;
-    }
-    else if (FILE* fp = FileOpen(path.c_str(), "rb", dir_.c_str())) {
-        // ʹ��stb_image����ͼƬ    
-        int image_width = 0;
-        int image_height = 0;
-        unsigned char* image_data = stbi_load_from_file(fp, &image_width, &image_height, NULL, 4);
-        if (image_data == NULL) {
+    if (it == img_map_.end()) {
+       FILE* fp = FileOpen(path.c_str(), "rb", dir_.c_str());
+       if (!fp) {
             return false;
-        }
-        GLuint image_texture;
-        glGenTextures(1, &image_texture);
-        glBindTexture(GL_TEXTURE_2D, image_texture);
-
-        // ������������
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        // �ϴ���������
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height,
-            0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-
-        stbi_image_free(image_data);
-
-        data.isValid = true;
-        data.useLinkCallback = false;
-        data.size.x = image_width;
-        data.size.y = image_height;
-        data.user_texture_id = image_texture;
-        fclose(fp);
-        img_map_[path] = new ImGui::MarkdownImageData(data);
-        return true;
+       }
+       img = std::make_shared<ImgItem>();
+       if (!img->Open(fp)) {
+           return false;
+       }
+       if (img_map_.size() > 30) {
+          compactImg(img->tsp - 30);
+       }
+       img_map_[path] = img;
     }
     else {
-        return false;
+        img = it->second;
+        img->touch();
     }
+    if (img) {
+        data.isValid = true;
+        data.useLinkCallback = false;
+        data.size.x = img->width;
+        data.size.y = img->height;
+        data.user_texture_id = img->id;
+        return true;
+    }
+    return false;
+}
+
+int MdDoc::compactImg(time_t tsp) {
+    if (last_tsp_ > tsp) {
+        return 0;
+    }
+    last_tsp_ = 0;
+    int count = 0;
+    for (auto it = img_map_.begin(); it != img_map_.end();) {
+        if (it->second->tsp < tsp) {
+            it = img_map_.erase(it);
+            count++;
+        }
+        else {
+            if (last_tsp_ == 0 || it->second->tsp < last_tsp_) {
+                last_tsp_ = it->second->tsp;
+            }
+            ++it;
+        }
+    }
+    last_tsp_ = tsp;
+    return count;
 }
