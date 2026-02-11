@@ -1,6 +1,7 @@
 
 sdl3 = subproject('sdl3')
 executable('imgui_demo', ['main.cpp',
+    'MdDoc.cpp',
     'imgui.cpp',
     'imgui_demo.cpp',
     'imgui_draw.cpp',

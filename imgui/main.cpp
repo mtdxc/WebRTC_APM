@@ -13,6 +13,7 @@
 #include "modules/audio_processing/include/audio_processing.h"
 #include "IconsFontAwesome6.h"
 #include "modules/audio_processing/RnNoiseProcessor.h"
+#include "MdDoc.h"
 #include <fstream>
 #ifdef _WIN32
 #include <io.h>
@@ -20,6 +21,7 @@
 #else
 #include <unistd.h>
 #endif
+
 #include <stdio.h>
 #include <SDL3/SDL.h>
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -37,6 +39,7 @@
 #ifdef __EMSCRIPTEN__
 #include "../libs/emscripten/emscripten_mainloop_stub.h"
 #endif
+
 std::string genFileName(const char* prefix, const char* ext = "txt") {
     time_t timeValue = 0;
     time(&timeValue);
@@ -720,7 +723,7 @@ int main(int, char**)
     SDL_GL_SetSwapInterval(1); // Enable vsync
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(window);
-
+    MdDoc md_;
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -757,7 +760,7 @@ int main(int, char**)
     #define DEFALUT_FONT_PATH "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 #endif
     if (0 == access(DEFALUT_FONT_PATH, 0)) {
-        io.Fonts->AddFontFromFileTTF(DEFALUT_FONT_PATH, 20.0f, nullptr, io.Fonts->GetGlyphRangesChineseFull());
+        MdDoc::LoadFonts(DEFALUT_FONT_PATH, 20.0f);
     }
     if (0 == access(FONT_ICON_FILE_NAME_FAS, 0)) {
     float baseFontSize = 13.0f; // 13.0f is the size of the default font. Change to the font size you use.
@@ -821,6 +824,25 @@ int main(int, char**)
         while (SDL_PollEvent(&event))
         {
             ImGui_ImplSDL3_ProcessEvent(&event);
+            if(event.type == SDL_EVENT_DROP_FILE) {
+                const char* dropped_file = event.drop.data;
+                printf("加载文件: %s\n", dropped_file);
+                // 检查文件扩展名
+                const char* ext = strrchr(dropped_file, '.');
+                if (!ext) break;
+                if (strcmp(ext, ".png") == 0 ||
+                    strcmp(ext, ".jpg") == 0 ||
+                    strcmp(ext, ".bmp") == 0) {
+                    //load_and_display_image(dropped_file);
+                }
+                else if (strcmp(ext, ".md") == 0) {
+                    md_.Open(dropped_file);
+                }
+                else {
+                    printf("不支持的文件格式: %s\n", dropped_file);
+                }
+                break;
+            }
             if (event.type == SDL_EVENT_QUIT)
                 done = true;
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
@@ -839,6 +861,7 @@ int main(int, char**)
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
+        md_.Draw();
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
